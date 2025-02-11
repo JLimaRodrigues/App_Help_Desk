@@ -7,14 +7,11 @@ $usuario_autenticado = false;
 $usuario_id = null;
 $nivel = null;
 
-$login = $_POST['login'];
+$email = $_POST['email'];
 $senha = $_POST['senha'];
 
 //USUARIOS DO SISTEMA
-$consulta = $conexao->prepare('SELECT * FROM usuario WHERE login=:login');
-$consulta->bindValue('login', $login);
-$consulta->execute();
-$dados = $consulta->fetchAll();
+$dados = $db->select('usuario', "*", "email = '$email'");
 
 foreach($dados as $dado){//PEGA SENHA
     if(password_verify($senha, $dado['senha'])){
@@ -32,7 +29,7 @@ if($usuario_autenticado){//USUARIO AUTENTICADO
     header('Location: home.php');
 } else {//NÃO AUTENTICADO
     $_SESSION['autenticado'] = 'NAO';
-    header('Location: index.php?login=erro');
+    header('Location: index.php?email=erro');
 }
 
 

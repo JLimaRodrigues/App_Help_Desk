@@ -17,7 +17,8 @@ $db->createTable("usuario", [
 $db->insert("usuario", [
     "nome" => "Administrador", 
     "login" => "admin",
-    "senha" => "123456",
+    // "senha" => "123456",
+    "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]), //o objetivo é aumentar o custo padrão de BCRYPT para 12, documentação https://www.php.net/manual/pt_BR/function.password-hash.php
     "nivel" => "1",
     "email" => "admin.teste@example.com"
 ]);
