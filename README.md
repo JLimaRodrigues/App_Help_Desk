@@ -1,5 +1,12 @@
 # App_Help_Desk
 
+## Get started
+
+1. Para rodar o projeto localmente
+
+   ```bash
+   docker-compose up --build -d
+   ```
 
 ###Tópicos 
 
@@ -28,4 +35,8 @@ O Objetivo do sistema é oferecer disponibilidade a receber ordens do usuário e
 :heavy_check_mark: - PHP Estruturado.
 :heavy_check_mark: - MySQL Básico.
 :heavy_check_mark: - BootStrap Básico.
+
+## Para Iniciar o projeto localmente
+
+rodar 
 
