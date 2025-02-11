@@ -37,7 +37,7 @@ class Conexao
 
     public function __construct() {
         try {
-            $this->conexao = new PDO('mysql:host='. DB_HOST .';dbname='. DB_NAME, DB_USER_ROOT, DB_PASS_ROOT);
+            $this->conexao = new PDO('mysql:host='. DB_HOST .';dbname='. DB_NAME . ';charset=utf8mb4', DB_USER_ROOT, DB_PASS_ROOT);
             $this->conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die('ERROR: '. $e->getMessage()); // Melhorar o tratamento de erros em produção
