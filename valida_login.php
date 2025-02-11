@@ -29,7 +29,7 @@ if($usuario_autenticado){//USUARIO AUTENTICADO
     header('Location: home.php');
 } else {//NÃO AUTENTICADO
     $_SESSION['autenticado'] = 'NAO';
-    header('Location: index.php?email=erro');
+    header('Location: index.php?login=erro');
 }
 
 

@@ -48,18 +48,34 @@ class Conexao
         if (!isset(self::$instance)) {
             self::$instance = new Conexao();
         }
-        return self::$instance->conexao; // Retorna a conexão, não a instância.
+        return self::$instance;
     }
 
     public function createTable($tableName, $columns) {
         $sql = "CREATE TABLE IF NOT EXISTS {$tableName} (";
         $columnsSql = [];
+        $foreignKeys = []; // Array para armazenar as definições de chaves estrangeiras
 
         foreach ($columns as $columnName => $columnType) {
-            $columnsSql[] = "{$columnName} {$columnType}";
+            if (is_array($columnType)) { // Verifica se é uma definição de chave estrangeira
+                if (isset($columnType['foreign_key'])) {
+                    $fk = $columnType['foreign_key'];
+                    $foreignKeys[] = "FOREIGN KEY ({$columnName}) REFERENCES {$fk['table']}({$fk['column']})";
+                    $columnsSql[] = "{$columnName} {$columnType['type']}"; // Adiciona a coluna com o tipo
+                }
+
+            } else {
+                $columnsSql[] = "{$columnName} {$columnType}"; // Coluna normal
+            }
         }
 
-        $sql .= implode(", ", $columnsSql) . ")";
+        $sql .= implode(", ", $columnsSql);
+
+        if (!empty($foreignKeys)) {
+            $sql .= ", " . implode(", ", $foreignKeys); // Adiciona as chaves estrangeiras
+        }
+
+        $sql .= ")";
 
         return $this->execute($sql);
     }
@@ -181,10 +197,6 @@ class Conexao
 
 }
 
-$conexao = Conexao::getInstance();
-
-$db = new Conexao();
-
-return $db;
+$db = Conexao::getInstance();
 
 ?>
