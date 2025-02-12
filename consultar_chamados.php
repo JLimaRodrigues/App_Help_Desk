@@ -7,16 +7,13 @@ $nivel = $_SESSION['nivel'];
 
 $resultado = '';
 
-//USUARIOS DO SISTEMA
-
+//CHAMADOS DO SISTEMA
 $dados = $db->select("ch.usuario_id, ch.titulo, ch.descricao_chamado, ca.descricao, us.nome")
                 ->from("chamado ch")
                 ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
                 ->join("usuario us", "us.id = ch.usuario_id")
                 ->orderBy("ch.usuario_id")
                 ->execute();
-
-// echo "<pre>"; print_r($consulta); echo "</pre>"; exit;
 
 foreach($dados as $dado){
   if($nivel == 1 || $session_id==$dado['usuario_id']){//SÓ VAMOS EXIBIR O CHAMADO CRIADO PELO USUÁRIO
@@ -72,6 +69,12 @@ foreach($dados as $dado){
             </div>
             
             <div class="card-body">
+
+            <?php if(isset($_GET['chamado']) && ($_GET['chamado'] == 'erro')){ ?>
+                <div class="alert alert-danger text-center m-3">
+                  Chamado Inválido.
+                </div>
+              <?php  } ?>
 
             <a href="abrir_chamado.php" class="btn btn-lg btn-success btn-block" type="button">Abrir chamado</a>
               
