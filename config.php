@@ -34,6 +34,8 @@ class Conexao
 {
     private $conexao;
     private static $instance;
+    private $sql;
+    private $params = [];
 
     public function __construct() {
         try {
@@ -51,39 +53,87 @@ class Conexao
         return self::$instance;
     }
 
-    public function createTable($tableName, $columns) {
+    public function select($colunas = "*")
+    {
+        $this->sql = "SELECT " . (is_array($colunas) ? implode(", ", $colunas) : $colunas) . " FROM ";
+        return $this;
+    }
+
+    public function from($tabela)
+    {
+        $this->sql .= $tabela;
+        return $this;
+    }
+
+    public function join($tabela, $condicao, $tipo = "INNER") {
+        $this->sql .= " " . $tipo . " JOIN " . $tabela . " ON " . $condicao;
+        return $this;
+    }
+
+    public function where($condicao, $params = []) {
+        $this->sql .= " WHERE " . $condicao;
+        $this->params = array_merge($this->params, $params);
+        return $this;
+    }
+
+    public function orderBy($campo, $direcao = "ASC") {
+        $this->sql .= " ORDER BY " . $campo . " " . $direcao;
+        return $this;
+    }
+
+    public function limit($limite) {
+        $this->sql .= " LIMIT " . $limite;
+        return $this;
+    }
+
+    public function groupBy($campo) {
+        $this->sql .= " GROUP BY " . $campo;
+        return $this;
+    }
+
+    public function having($condicao, $params = []) {
+        $this->sql .= " HAVING " . $condicao;
+        $this->params = array_merge($this->params, $params);
+        return $this;
+    }
+
+    public function createTable($tableName, $columns, $foreignKeys = []) { // $foreignKeys agora é um array
         $sql = "CREATE TABLE IF NOT EXISTS {$tableName} (";
         $columnsSql = [];
-        $foreignKeys = []; // Array para armazenar as definições de chaves estrangeiras
 
         foreach ($columns as $columnName => $columnType) {
-            if (is_array($columnType)) { // Verifica se é uma definição de chave estrangeira
-                if (isset($columnType['foreign_key'])) {
-                    $fk = $columnType['foreign_key'];
-                    $foreignKeys[] = "FOREIGN KEY ({$columnName}) REFERENCES {$fk['table']}({$fk['column']})";
-                    $columnsSql[] = "{$columnName} {$columnType['type']}"; // Adiciona a coluna com o tipo
-                }
-
+            if (is_array($columnType) && isset($columnType['foreign_key'])) {
+                // Tratamento de FKs dentro da definição da coluna (legado) - ainda suportado
+                $fk = $columnType['foreign_key'];
+                $columnsSql[] = "{$columnName} {$columnType['type']}";
             } else {
-                $columnsSql[] = "{$columnName} {$columnType}"; // Coluna normal
+                $columnsSql[] = "{$columnName} {$columnType}";
             }
         }
 
         $sql .= implode(", ", $columnsSql);
 
+        // Tratamento de múltiplas FKs (novo)
         if (!empty($foreignKeys)) {
-            $sql .= ", " . implode(", ", $foreignKeys); // Adiciona as chaves estrangeiras
+            $fkSql = [];
+            foreach ($foreignKeys as $fk) {
+                $fkSql[] = "FOREIGN KEY ({$fk['column']}) REFERENCES {$fk['table']}({$fk['reference']})";
+            }
+            $sql .= ", " . implode(", ", $fkSql);
         }
 
         $sql .= ")";
 
-        return $this->execute($sql);
+        $this->sql = $sql;
+        return $this->execute();
     }
 
 
     public function dropTable($tableName) {
         $sql = "DROP TABLE IF EXISTS {$tableName}";
-        return $this->execute($sql);
+
+        $this->sql = $sql;
+        return $this->execute();
     }
 
     public function alterTable($tableName, $action, $columnName, $newColumnType = null) {
@@ -91,7 +141,9 @@ class Conexao
         if ($newColumnType) {
             $sql .= " {$newColumnType}";
         }
-        return $this->execute($sql);
+
+        $this->sql = $sql;
+        return $this->execute();
     }
 
 
@@ -99,7 +151,10 @@ class Conexao
         $columns = implode(", ", array_keys($data));
         $values = ":" . implode(", :", array_keys($data));
         $sql = "INSERT INTO {$tableName} ({$columns}) VALUES ({$values})";
-        return $this->execute($sql, $data);
+
+        $this->sql = $sql;
+        $this->params = $data;
+        return $this->execute();
     }
 
     public function update($tableName, $data, $where) {
@@ -108,56 +163,67 @@ class Conexao
             $updates[] = "{$key} = :{$key}";
         }
         $sql = "UPDATE {$tableName} SET " . implode(", ", $updates) . " WHERE {$where}";
-        return $this->execute($sql, $data);
+
+        $this->sql = $sql;
+        $this->params = $data;
+
+        return $this->execute();
     }
 
     public function delete($tableName, $where) {
         $sql = "DELETE FROM {$tableName} WHERE {$where}";
-        return $this->execute($sql);
+
+        $this->sql = $sql;
+        return $this->execute();
     }
 
-    public function select($tableName, $columns = "*", $where = null, $orderBy = null, $limit = null) {
-        $sql = "SELECT {$columns} FROM {$tableName}";
-        if ($where) {
-            $sql .= " WHERE {$where}";
-        }
-        if ($orderBy) {
-            $sql .= " ORDER BY {$orderBy}";
-        }
-        if ($limit) {
-            $sql .= " LIMIT {$limit}";
-        }
-        return $this->execute($sql);
-    }
+    // public function select($tableName, $columns = "*", $where = null, $orderBy = null, $limit = null) {
+    //     $sql = "SELECT {$columns} FROM {$tableName}";
+    //     if ($where) {
+    //         $sql .= " WHERE {$where}";
+    //     }
+    //     if ($orderBy) {
+    //         $sql .= " ORDER BY {$orderBy}";
+    //     }
+    //     if ($limit) {
+    //         $sql .= " LIMIT {$limit}";
+    //     }
+    //     return $this->execute($sql);
+    // }
 
+    public function execute() {
+        if (empty($this->sql)) {
+            $this->logError("Tentativa de executar uma query vazia.");
+            throw new Exception("Query was empty");
+        }
 
-    public function execute($sql, $params = []) {
         try {
-            $stmt = $this->conexao->prepare($sql);
-            foreach ($params as $key => $value) {
+            $stmt = $this->conexao->prepare($this->sql);
+
+            foreach ($this->params as $key => $value) {
                 $paramType = PDO::PARAM_STR;
                 if (is_int($value)) {
                     $paramType = PDO::PARAM_INT;
                 } elseif (is_null($value)) {
                     $paramType = PDO::PARAM_NULL;
                 } elseif (is_bool($value)) {
-                    $value = $value ? 1 : 0; // Converte booleanos para 1 ou 0
+                    $value = $value ? 1 : 0;
                     $paramType = PDO::PARAM_INT;
                 }
-                $stmt->bindValue(":{$key}", $value, $paramType);
+                $stmt->bindValue(":" . $key, $value, $paramType);
             }
+
             $stmt->execute();
+            $this->logQuery($this->sql, $this->params);
 
-            $this->logQuery($sql, $params); // Log da query executada
-
-            if (stripos($sql, "SELECT") === 0) { // Verifica se é uma query de SELECT
-                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (stripos($this->sql, "SELECT") === 0) {
+                return $stmt->fetchAll();
             }
-            return true; // Retorna true para outras operações (INSERT, UPDATE, DELETE, etc.)
+            return true;
 
-        } catch (PDOException $e) {
-            $this->logError("Erro na query: " . $e->getMessage() . " SQL: " . $sql);
-            throw $e; // Re-lança a exceção após logar
+        } finally {
+            $this->sql = null;
+            $this->params = [];
         }
     }
 

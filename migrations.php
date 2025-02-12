@@ -13,12 +13,14 @@ try {
     $db->createTable("nivel", [
         "id_nivel" => "INT AUTO_INCREMENT PRIMARY KEY",
         "nivel" => "VARCHAR(60) NOT NULL",
-        "cod_ni" => "INT NOT NULL",
+        "cod_ni" => "INT NOT NULL UNIQUE",
         "descricao" => "TEXT",
         "created_at" => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
     ]);
 
      $db->insert("categoria", ["descricao" => "Hardware"]);
+     $db->insert("categoria", ["descricao" => "Criação Usuário"]);
+     $db->insert("categoria", ["descricao" => "Impressora"]);
      $db->insert("categoria", ["descricao" => "Redes"]);
      $db->insert("categoria", ["descricao" => "Software"]);
 
@@ -27,31 +29,62 @@ try {
      $db->insert("nivel", ["nivel" => "Administrador", "cod_ni" => 3]);
  
      $db->createTable("usuario", [
-        "id" => "INT AUTO_INCREMENT PRIMARY KEY",
-        "nome" => "VARCHAR(144) NOT NULL",
-        "login" => "VARCHAR(60) NOT NULL",
-        "senha" => "VARCHAR(255) NOT NULL",
-        "nivel" => "INT NOT NULL",
-        "email" => "VARCHAR(255) UNIQUE NOT NULL",
-        "created_at" => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-        "foreign_key" => [
-            "table" => "nivel",
-            "column" => "cod_ni"
+        "id"         => "INT AUTO_INCREMENT PRIMARY KEY",
+        "nome"       => "VARCHAR(144) NOT NULL",
+        "login"      => "VARCHAR(60) NOT NULL",
+        "senha"      => "VARCHAR(255) NOT NULL",
+        "nivel"      => "INT NOT NULL",
+        "email"      => "VARCHAR(255) UNIQUE NOT NULL",
+        "created_at" => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    ], [
+        [
+            "column"    => "nivel",
+            "table"     => "nivel",
+            "reference" => "cod_ni"
         ]
     ]);
 
     $db->createTable("chamado", [
-        "id_chamado" => "INT AUTO_INCREMENT PRIMARY KEY",
-        "titulo" => "VARCHAR(60) NOT NULL",
+        "id_chamado"        => "INT AUTO_INCREMENT PRIMARY KEY",
+        "titulo"            => "VARCHAR(60) NOT NULL",
         "descricao_chamado" => "TEXT NOT NULL",
-        "categoria" => "INT NOT NULL",
-        "created_at" => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-        "categoria" => [
-            "type" => "INT NOT NULL",
-            "foreign_key" => [
-                "table" => "categoria",
-                "column" => "id_categoria"
-            ]
+        "categoria_id"      => "INT NOT NULL",
+        "usuario_id"        => "INT NOT NULL",
+        "created_at"        => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    ], [
+        [
+            "column"    => "categoria_id",
+            "table"     => "categoria",
+            "reference" => "id_categoria"
+        ],
+        [
+            "column"    => "usuario_id",
+            "table"     => "usuario",
+            "reference" => "id"
+        ]
+    ]);
+
+    $db->createTable("atribuido_para", [
+        "id_atribuicao"   => "INT AUTO_INCREMENT PRIMARY KEY",
+        "chamado_id"      => "INT NOT NULL",
+        "tecnico_id"      => "INT NOT NULL",
+        "atribuido_por"   => "INT NOT NULL",
+        "data_atribuicao" => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    ], [
+        [
+            "column"    => "chamado_id",
+            "table"     => "chamado",
+            "reference" => "id_chamado"
+        ],
+        [
+            "column"    => "tecnico_id",
+            "table"     => "usuario",
+            "reference" => "id"
+        ],
+        [
+            "column"    => "atribuido_por",
+            "table"     => "usuario",
+            "reference" => "id"
         ]
     ]);
 

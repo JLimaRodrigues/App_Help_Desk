@@ -38,12 +38,12 @@
             <div class="card-body">
               <div class="row">
                 <div class="col-6 d-flex justify-content-center">
-                  <a href="abrir_chamado.php">
-                    <img src="formulario_abrir_chamado.png" width="70" height="70">
+                  <a href="consultar_usuarios.php">
+                    <img src="listar_usuarios.png" width="70" height="70">
                   </a>
                 </div>
                 <div class="col-6 d-flex justify-content-center">
-                  <a href="consultar_chamado.php">
+                  <a href="consultar_chamados.php">
                     <img src="formulario_consultar_chamado.png" width="70" height="70">
                   </a>
                 </div>

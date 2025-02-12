@@ -12,14 +12,25 @@ if(isset($_SESSION['id'])){
 }
 
 //USUARIOS DO SISTEMA
-$consulta = $conexao->prepare('INSERT INTO chamado(titulo, categoria, descricao_chamado, id_usuario) 
-                                VALUES (:titulo, :categoria, :descricao_chamado, :id_usuario)');
-$consulta->bindValue('titulo', $titulo);
-$consulta->bindValue('categoria', $categoria);
-$consulta->bindValue('descricao_chamado', $descricao_chamado);
-$consulta->bindValue('id_usuario', $id_usuario);
-$consulta->execute();
-$dados = $consulta->fetchAll();
+// $consulta = $conexao->prepare('INSERT INTO chamado(titulo, categoria, descricao_chamado, id_usuario) 
+//                                 VALUES (:titulo, :categoria, :descricao_chamado, :id_usuario)');
+// $consulta->bindValue('titulo', $titulo);
+// $consulta->bindValue('categoria', $categoria);
+// $consulta->bindValue('descricao_chamado', $descricao_chamado);
+// $consulta->bindValue('id_usuario', $id_usuario);
+// $consulta->execute();
+// $dados = $consulta->fetchAll();
+
+$consulta = $db->insert("chamado", [
+    "titulo"            => $titulo,
+    "categoria_id"      => $categoria,
+    "descricao_chamado" => $descricao_chamado,
+    "usuario_id"        => $id_usuario
+]);
+
+$dados = $db->select("*")
+            ->from("chamado")
+            ->execute();
 
 header('Location: abrir_chamado.php?cadastro=sucess');
 ?>

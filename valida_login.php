@@ -11,7 +11,11 @@ $email = $_POST['email'];
 $senha = $_POST['senha'];
 
 //USUARIOS DO SISTEMA
-$dados = $db->select('usuario', "*", "email = '$email'");
+// $dados = $db->select('usuario', "*", "email = '$email'");
+$dados = $db->select( "*")
+            ->from('usuario')
+            ->where("email = '$email'")
+            ->execute();
 
 foreach($dados as $dado){//PEGA SENHA
     if(password_verify($senha, $dado['senha'])){

@@ -1,4 +1,12 @@
-<?php require_once 'validador_acesso.php' ?>
+<?php 
+require_once 'validador_acesso.php'; 
+require_once "config.php";
+
+$categorias = $db->select("*")
+                 ->from("categoria")
+                 ->execute();
+
+?>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -55,11 +63,11 @@
                     <div class="form-group">
                       <label for="categoria">Categoria</label>
                       <select id="categoria" class="form-control" title="selecione uma categoria" name="categoria" required>
-                        <option value="1">Criação Usuário</option>
-                        <option value="2">Impressora</option>
-                        <option value="3">Hardware</option>
-                        <option value="4">Software</option>
-                        <option value="5">Rede</option>
+
+                        <?php foreach($categorias as $categoria) {?>
+                          <option value="<?= $categoria['id_categoria'] ?>"><?= $categoria['descricao'] ?></option>
+                        <?php } ?>
+
                       </select>
                     </div>
                     

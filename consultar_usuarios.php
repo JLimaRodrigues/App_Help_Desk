@@ -8,19 +8,21 @@ $nivel = $_SESSION['nivel'];
 $resultado = '';
 
 //USUARIOS DO SISTEMA
-$consulta = $conexao->prepare('SELECT ch.id_usuario, ch.titulo, ch.descricao_chamado, ca.descricao, us.nome_usuario FROM chamado ch
-INNER JOIN categoria ca ON ca.id = ch.categoria
-INNER JOIN usuario us ON us.id = ch.id_usuario ORDER BY ch.id');
-$consulta->execute();
-$dados = $consulta->fetchAll();
+$dados = $db->select("us.id, us.nome, us.login, us.email, ni.nivel")
+                ->from("usuario us")
+                ->join("nivel ni", "us.nivel = ni.cod_ni")
+                ->orderBy("us.id")
+                ->execute();
+
+// echo "<pre>"; print_r($consulta); echo "</pre>"; exit;
 
 foreach($dados as $dado){
   if($nivel == 1 || $session_id==$dado['id_usuario']){//SÓ VAMOS EXIBIR O CHAMADO CRIADO PELO USUÁRIO
                                                       $resultado .= '<div class="card mb-3 bg-light">
                                                                       <div class="card-body">
-                                                                        <h5 class="card-title">'.$dado['titulo'].'<b> feito por '.($session_id==$dado['id_usuario'] ? 'mim':$dado['nome_usuario']).'<b></h5>
-                                                                        <h6 class="card-subtitle mb-2 text-muted">'.$dado['descricao'].'</h6>
-                                                                        <p class="card-text">'.$dado['descricao_chamado'].'</p>
+                                                                        <h5 class="card-title">'.$dado['nome'].'<b> feito por<b></h5>
+                                                                        <h6 class="card-subtitle mb-2 text-muted"> Login: '.$dado['login'].' - Email: ' .$dado['email']. ' - Nivel ' .$dado['nivel']. '</h6>
+                                                                        <p class="card-text"> Alguma coisa</p>
 
                                                                       </div>
                                                                     </div>';
@@ -64,7 +66,7 @@ foreach($dados as $dado){
         <div class="card-consultar-chamado">
           <div class="card">
             <div class="card-header">
-              Consulta de chamado
+              Consulta de Usuários
             </div>
             
             <div class="card-body">
