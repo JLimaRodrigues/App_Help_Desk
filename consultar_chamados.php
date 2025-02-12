@@ -8,25 +8,12 @@ $nivel = $_SESSION['nivel'];
 $resultado = '';
 
 //CHAMADOS DO SISTEMA
-$dados = $db->select("ch.usuario_id, ch.titulo, ch.descricao_chamado, ca.descricao, us.nome")
+$chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_chamado, ca.descricao as categoria, us.nome")
                 ->from("chamado ch")
                 ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
                 ->join("usuario us", "us.id = ch.usuario_id")
                 ->orderBy("ch.usuario_id")
                 ->execute();
-
-foreach($dados as $dado){
-  if($nivel == 1 || $session_id==$dado['usuario_id']){//SÓ VAMOS EXIBIR O CHAMADO CRIADO PELO USUÁRIO
-                                                      $resultado .= '<div class="card my-3 bg-light">
-                                                                      <div class="card-body">
-                                                                        <h5 class="card-title">'.$dado['titulo'].'<b> feito por '.($session_id==$dado['usuario_id'] ? 'mim':$dado['nome']).'<b></h5>
-                                                                        <h6 class="card-subtitle mb-2 text-muted">'.$dado['descricao'].'</h6>
-                                                                        <p class="card-text">'.$dado['descricao_chamado'].'</p>
-
-                                                                      </div>
-                                                                    </div>';
-                                                    }
-}
 
 ?>
 <html>
@@ -37,11 +24,14 @@ foreach($dados as $dado){
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
     <style>
-      .card-consultar-chamado {
-        padding: 30px 0 0 0;
-        width: 100%;
-        margin: 0 auto;
-      }
+        .card-consultar-chamado {
+            padding: 30px 0 0 0;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .card-clickable {
+            cursor: pointer; /* Indica que o card é clicável */
+        }
     </style>
   </head>
 
@@ -80,6 +70,18 @@ foreach($dados as $dado){
               
             <?= $resultado; ?>
 
+            <?php foreach ($chamados as $chamado) { ?> 
+              
+                <div class="card my-3 bg-light card-clickable" data-ticket-id="<?= $chamado['id_chamado'] ?>">
+                    <div class="card-body">
+                        <h5 class="card-title"><?= $chamado['titulo'] ?> <b> feito por <?php $session_id == $chamado['usuario_id'] ? 'mim': $chamado['nome'] ?><b></h5>
+                        <h6 class="card-subtitle mb-2 text-muted"><?= $chamado['categoria'] ?></h6>
+                        <p class="card-text"><?= $chamado['descricao_chamado'] ?></p>
+                    </div>
+                </div>
+              
+            <?php } ?>
+
               <div class="row mt-5">
                 <div class="col-6">
                     <a href="home.php" class="btn btn-lg btn-warning btn-block" type="button">Voltar</a>
@@ -90,5 +92,19 @@ foreach($dados as $dado){
         </div>
       </div>
     </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.card-clickable').click(function() {
+                var ticketId = $(this).data('ticket-id');
+                window.location.href = 'info_chamado.php?chamado=' + ticketId;
+            });
+        });
+    </script>
+
   </body>
 </html>

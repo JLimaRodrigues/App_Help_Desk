@@ -177,20 +177,6 @@ class Conexao
         return $this->execute();
     }
 
-    // public function select($tableName, $columns = "*", $where = null, $orderBy = null, $limit = null) {
-    //     $sql = "SELECT {$columns} FROM {$tableName}";
-    //     if ($where) {
-    //         $sql .= " WHERE {$where}";
-    //     }
-    //     if ($orderBy) {
-    //         $sql .= " ORDER BY {$orderBy}";
-    //     }
-    //     if ($limit) {
-    //         $sql .= " LIMIT {$limit}";
-    //     }
-    //     return $this->execute($sql);
-    // }
-
     public function execute() {
         if (empty($this->sql)) {
             $this->logError("Tentativa de executar uma query vazia.");
@@ -217,7 +203,7 @@ class Conexao
             $this->logQuery($this->sql, $this->params);
 
             if (stripos($this->sql, "SELECT") === 0) {
-                return $stmt->fetchAll();
+                return $stmt->fetchAll(\PDO::FETCH_ASSOC);
             }
             return true;
 

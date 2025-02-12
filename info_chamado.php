@@ -7,10 +7,12 @@ if(!isset($_GET['chamado'])){
     header('Location: consultar_chamados.php?chamado=erro');
 }
 
-$dados = $db->select("*")
+$chamado = $db->select("ch.*, ca.descricao as categoria, atri.*")
             ->from("chamado ch")
             ->join("categoria ca", "ch.categoria_id = ca.id_categoria")
-            ->join("atribuido_para atri_par", "atri_par.chamado_id = ca.")
+            ->join("atribuido_para atri", "ch.id_chamado = atri.chamado_id", "LEFT")
+            ->where("ch.id_chamado = '{$_GET['chamado']}'")
+            ->execute()[0];
 
 ?>
 <!DOCTYPE html>
@@ -92,9 +94,9 @@ $dados = $db->select("*")
                         Informações do Chamado
                     </div>
                     <div class="card-body">
-                        <p><strong>Título:</strong> Solicito que troquem o SO do meu PC</p>
+                        <p><strong>Título:</strong> <?= $chamado['titulo'] ?></p>
                         <p><strong>Criado por:</strong> Você</p>
-                        <p><strong>Data de criação:</strong> 2024-05-15</p>
+                        <p><strong>Data de criação:</strong> <?= $chamado['created_at'] ?></p>
                         <div class="form-group">
                             <label for="technicians">Atribuir Técnicos:</label>
                             <select class="form-control" id="technicians" multiple>
