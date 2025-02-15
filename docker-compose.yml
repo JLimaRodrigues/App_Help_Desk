@@ -1,12 +1,23 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.web
     ports:
       - "8080:80"
-    volumes:
-      - .:/var/www/html
     depends_on:
       - db
+    networks:
+      - app-network
+
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.websocket
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
 
   db:
     image: mysql:5.7
@@ -19,6 +30,8 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - app-network
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -31,6 +44,12 @@ services:
       - "8081:80"
     depends_on:
       - db
+    networks:
+      - app-network
 
 volumes:
   db_data:
+
+networks:
+  app-network:
+    driver: bridge

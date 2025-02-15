@@ -111,30 +111,30 @@ $chamado = $db->select("ch.*, ca.descricao as categoria, atri.*")
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // Carregar mensagens do chat e técnicos
-            loadMessages();
-            loadTechnicians();
+  // Conecta ao WebSocket (certifique-se de que o IP/porta estejam corretos)
+  var conn = new WebSocket('ws://localhost:8082');
+//   var conn = new WebSocket('ws://localhost:8080');
 
-            // Enviar mensagem
-            $('#message-form').submit(function(event) {
-                event.preventDefault();
-                var message = $('#message-input').val();
-                sendMessage(message);
-            });
-        });
+  conn.onopen = function(e) {
+      console.log("Conexão WebSocket estabelecida!");
+  };
 
-        function loadMessages() {
-            // Implementar lógica para carregar mensagens do banco de dados via AJAX
-        }
+  conn.onmessage = function(e) {
+      console.log("Mensagem recebida: " + e.data);
+      // Aqui você pode implementar a lógica para exibir a mensagem no chat,
+      // por exemplo, adicionando um novo elemento ao container de mensagens.
+  };
 
-        function loadTechnicians() {
-            // Implementar lógica para carregar técnicos do banco de dados via AJAX
-        }
-
-        function sendMessage(message) {
-            // Implementar lógica para enviar mensagem para o banco de dados via AJAX
-        }
-    </script>
+  // Exemplo de envio de mensagem ao enviar o formulário do chat
+  document.getElementById('message-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      var messageInput = document.getElementById('message-input');
+      var message = messageInput.value;
+      if (message.trim() !== "") {
+          conn.send(message);
+          messageInput.value = "";
+      }
+  });
+</script>
 </body>
 </html>
