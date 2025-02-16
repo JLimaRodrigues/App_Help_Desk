@@ -5,15 +5,20 @@ require 'config.php';
 $session_id = $_SESSION['id'];
 $nivel = $_SESSION['nivel'];
 
-$resultado = '';
-
 //CHAMADOS DO SISTEMA
-$chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_chamado, ca.descricao as categoria, us.nome")
-                ->from("chamado ch")
-                ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
-                ->join("usuario us", "us.id = ch.usuario_id")
-                ->orderBy("ch.usuario_id")
-                ->execute();
+if($nivel == 1){ // Usuário comum só pode ver os dele
+
+} else if($nivel == 2){ //Técnico - pode ver os deles e os atribuidos para ele
+
+} else {// Gestor ou Administrador - podem ver todos
+  $chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_chamado, ca.descricao as categoria, us.nome")
+  ->from("chamado ch")
+  ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
+  ->join("usuario us", "us.id = ch.usuario_id")
+  ->orderBy("ch.usuario_id")
+  ->execute();
+}
+
 
 ?>
 <html>
@@ -67,8 +72,6 @@ $chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_c
               <?php  } ?>
 
             <a href="abrir_chamado.php" class="btn btn-lg btn-success btn-block" type="button">Abrir chamado</a>
-              
-            <?= $resultado; ?>
 
             <?php foreach ($chamados as $chamado) { ?> 
               

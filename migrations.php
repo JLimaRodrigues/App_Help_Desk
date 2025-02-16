@@ -25,8 +25,9 @@ try {
      $db->insert("categoria", ["descricao" => "Software"]);
 
      $db->insert("nivel", ["nivel" => "Usuário Comum", "cod_ni" => 1]);
-     $db->insert("nivel", ["nivel" => "Gestor", "cod_ni" => 2]);
-     $db->insert("nivel", ["nivel" => "Administrador", "cod_ni" => 3]);
+     $db->insert("nivel", ["nivel" => "Técnico", "cod_ni" => 2]);
+     $db->insert("nivel", ["nivel" => "Gestor", "cod_ni" => 3]);
+     $db->insert("nivel", ["nivel" => "Administrador", "cod_ni" => 4]);
  
      $db->createTable("usuario", [
         "id"         => "INT AUTO_INCREMENT PRIMARY KEY",
@@ -111,7 +112,7 @@ try {
         "nome" => "Administrador",
         "login" => "admin",
         "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
-        "nivel" => 3,
+        "nivel" => 4,
         "email" => "admin.teste@example.com"
     ]);
 

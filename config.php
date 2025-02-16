@@ -1,7 +1,5 @@
 <?php 
 
-// require_once './.env';
-
 function carregarConstantesAmbiente($caminhoArquivo) {
     if (!file_exists($caminhoArquivo)) {
       return false;
@@ -90,6 +88,11 @@ class Conexao
         return $this;
     }
 
+    public function offset($inicio) {
+        $this->sql .= " OFFSET " . $inicio;
+        return $this;
+    }
+
     public function groupBy($campo) {
         $this->sql .= " GROUP BY " . $campo;
         return $this;
@@ -101,13 +104,12 @@ class Conexao
         return $this;
     }
 
-    public function createTable($tableName, $columns, $foreignKeys = []) { // $foreignKeys agora é um array
+    public function createTable($tableName, $columns, $foreignKeys = []) {
         $sql = "CREATE TABLE IF NOT EXISTS {$tableName} (";
         $columnsSql = [];
 
         foreach ($columns as $columnName => $columnType) {
             if (is_array($columnType) && isset($columnType['foreign_key'])) {
-                // Tratamento de FKs dentro da definição da coluna (legado) - ainda suportado
                 $fk = $columnType['foreign_key'];
                 $columnsSql[] = "{$columnName} {$columnType['type']}";
             } else {
