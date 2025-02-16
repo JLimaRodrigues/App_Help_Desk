@@ -16,6 +16,8 @@ services:
       dockerfile: Dockerfile.websocket
     ports:
       - "8082:8082"
+    depends_on:
+      - db
     networks:
       - app-network
 

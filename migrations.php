@@ -88,12 +88,39 @@ try {
         ]
     ]);
 
+    $db->createTable("mensagens_chamado", [
+        "id_messagem" => "INT AUTO_INCREMENT PRIMARY KEY",
+        "chamado_id"  => "INT NOT NULL",
+        "usuario_id"  => "INT NOT NULL",
+        "mensagem"    => "TEXT NOT NULL",
+        "created_at"  => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    ], [
+        [
+            "column"    => "chamado_id",
+            "table"     => "chamado",
+            "reference" => "id_chamado"
+        ],
+        [
+            "column"    => "usuario_id",
+            "table"     => "usuario",
+            "reference" => "id"
+        ]
+    ]);
+
     $db->insert("usuario", [
         "nome" => "Administrador",
         "login" => "admin",
         "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
         "nivel" => 3,
         "email" => "admin.teste@example.com"
+    ]);
+
+    $db->insert("usuario", [
+        "nome" => "Usuário Comum",
+        "login" => "teste",
+        "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
+        "nivel" => 1,
+        "email" => "teste@example.com"
     ]);
 
     echo "Tabelas criadas e dados inseridos com sucesso!";

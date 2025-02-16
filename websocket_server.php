@@ -1,4 +1,7 @@
 <?php
+
+require_once __DIR__ . '/config.php';
+
 set_time_limit(0);
 
 $host = '0.0.0.0';
@@ -36,12 +39,9 @@ while (true) {
         unset($changed[$key]);
     }
 
-    // Loop por todos os sockets conectados para ler dados
     foreach ($changed as $client) {
-        // Lê os dados brutos enviados pelo cliente
         $data = @socket_read($client, 1024);
         if ($data === false) {
-            // Desconexão do cliente
             $index = array_search($client, $clients);
             unset($clients[$index]);
             socket_close($client);
@@ -51,14 +51,49 @@ while (true) {
         
         $data = trim($data);
         if (!empty($data)) {
-            // Decodifica a mensagem recebida (caso esteja mascarada)
+
             $decodedMessage = unmask($data);
             echo "Mensagem recebida: {$decodedMessage}\n";
-            
-            // Broadcast para todos os clientes conectados
-            $response = mask("Servidor diz: " . $decodedMessage);
+
+            $mensagemRecebida = json_decode($decodedMessage, true);
+            if ($mensagemRecebida && isset($mensagemRecebida['usuario'], $mensagemRecebida['chamado'], $mensagemRecebida['mensagem'])) {
+                // Insere no banco de dados
+                $db->insert("mensagens_chamado", [
+                    "chamado_id" => $mensagemRecebida['chamado'],
+                    "usuario_id" => $mensagemRecebida['usuario'],
+                    "mensagem"   => $mensagemRecebida['mensagem']
+                ]);
+        
+                $ultimoId = $db->getLastInsertId(); 
+
+                $resultado = $db->select("m.*, u.id as usuario_id, u.nome as usuario_nome, n.nivel as nivel_descricao")
+                                ->from("mensagens_chamado m")
+                                ->join("usuario u", "m.usuario_id = u.id")
+                                ->join("nivel n", "u.nivel = n.cod_ni")
+                                ->where("m.id_messagem = '{$ultimoId}'")
+                                ->execute();
+        
+                if (!empty($resultado)) {
+                    $msgData = $resultado[0];
+                    $textoResposta = $msgData['usuario_nome'] . " (" . $msgData['nivel_descricao'] . ") - " . $msgData['created_at'] . " : " . $msgData['mensagem'];
+                    
+                    $respostaJson = json_encode([
+                        "usuario_id"   => $msgData['usuario_id'],
+                        "usuario_nome" => $msgData['usuario_nome'],
+                        "nivel"        => $msgData['nivel_descricao'],
+                        "data"         => $msgData['created_at'],
+                        "mensagem"     => $msgData['mensagem']
+                    ]);
+                } else {
+                    $respostaJson = json_encode(["mensagem" => $mensagemRecebida['mensagem']]);
+                }
+            } else {
+                $respostaJson = json_encode(["mensagem" => $decodedMessage]);
+            }
+        
+            $response = mask($respostaJson);
+        
             foreach ($clients as $sendClient) {
-                // Não envia para o socket principal
                 if ($sendClient != $socket) {
                     socket_write($sendClient, $response, strlen($response));
                 }

@@ -53,6 +53,10 @@ class Conexao
         return self::$instance;
     }
 
+    public function getLastInsertId() {
+        return $this->conexao->lastInsertId();
+    }
+
     public function select($colunas = "*")
     {
         $this->sql = "SELECT " . (is_array($colunas) ? implode(", ", $colunas) : $colunas) . " FROM ";

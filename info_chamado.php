@@ -14,6 +14,14 @@ $chamado = $db->select("ch.*, ca.descricao as categoria, atri.*")
             ->where("ch.id_chamado = '{$_GET['chamado']}'")
             ->execute()[0];
 
+$mensagens = $db->select("m.*, u.nome as usuario_nome, u.nivel, n.nivel as nivel_descricao")
+            ->from("mensagens_chamado m")
+            ->join("usuario u", "m.usuario_id = u.id")
+            ->join("nivel n", "u.nivel = n.cod_ni")
+            ->where("m.chamado_id = '{$_GET['chamado']}'")
+            ->orderBy("m.created_at", "ASC")
+            ->execute();
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -74,8 +82,28 @@ $chamado = $db->select("ch.*, ca.descricao as categoria, atri.*")
                     <div class="card-header">
                         Resumo do Chamado
                     </div>
-                    <div class="card-body chat-container">
+                    <div class="card-body chat-container" id="chat-container">
+                    <?php foreach ($mensagens as $msg){
+                            if ($msg['usuario_id'] == $_SESSION['id']) {
+                                $classe = "user";
+                                $remetente = "Eu";
+                            } else {
+                                if ($_SESSION['nivel'] != 1) {
+                                    $classe = "technician";
+                                } else {
+                                    $classe = "user";
+                                }
+                                $remetente = $msgData['usuario_nome'] . " (" . $msgData['nivel_descricao'] . ")";
+                            }
+                        ?>
+                        <div class="message <?= $classe ?>">
+                            <div class="message-info">
+                                <strong><?= htmlspecialchars($remetente) ?> - <?= $msg['created_at'] ?></strong>
+                            </div>
+                            <p><?= nl2br(htmlspecialchars($msg['mensagem'])) ?></p>
                         </div>
+                        <?php } ?>
+                    </div>
                     <div class="card-footer">
                         <form id="message-form">
                             <div class="input-group">
@@ -113,26 +141,48 @@ $chamado = $db->select("ch.*, ca.descricao as categoria, atri.*")
     <script>
   // Conecta ao WebSocket (certifique-se de que o IP/porta estejam corretos)
   var conn = new WebSocket('ws://localhost:8082');
-//   var conn = new WebSocket('ws://localhost:8080');
 
   conn.onopen = function(e) {
       console.log("Conexão WebSocket estabelecida!");
   };
 
   conn.onmessage = function(e) {
-      console.log("Mensagem recebida: " + e.data);
-      // Aqui você pode implementar a lógica para exibir a mensagem no chat,
-      // por exemplo, adicionando um novo elemento ao container de mensagens.
-  };
+    var data = JSON.parse(e.data);
+
+    var mensagemElem = document.createElement("div");
+    var remetente = "";
+    var classe = "";
+
+    var idUsuario = <?= $_SESSION['id']; ?>;
+
+    if (data.usuario_id && data.usuario_id == idUsuario) {
+        classe = "user";
+        remetente = "Eu";
+    } else {
+        classe = "technician";
+        remetente = data.usuario_nome || "Outros";
+    }
+
+    // Cria o markup da mensagem com os dados recebidos
+    mensagemElem.className = "message " + classe;
+    mensagemElem.innerHTML = "<div class='message-info'><strong>" + remetente + " (" + data.nivel + ") - " + data.data + "</strong></div>" +
+                             "<p>" + data.mensagem + "</p>";
+    document.getElementById("chat-container").appendChild(mensagemElem);
+};
 
   // Exemplo de envio de mensagem ao enviar o formulário do chat
   document.getElementById('message-form').addEventListener('submit', function(event) {
       event.preventDefault();
       var messageInput = document.getElementById('message-input');
-      var message = messageInput.value;
-      if (message.trim() !== "") {
-          conn.send(message);
-          messageInput.value = "";
+      var mensagem = messageInput.value.trim();
+
+      if (mensagem !== "") {
+        var usuario = <?= $_SESSION['id']; ?>;
+        var chamado = <?= $_GET['chamado']; ?>;
+
+        var data = JSON.stringify({ usuario, chamado, mensagem });
+        conn.send(data);
+        messageInput.value = "";
       }
   });
 </script>
