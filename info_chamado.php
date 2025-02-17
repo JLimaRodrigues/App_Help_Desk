@@ -86,14 +86,14 @@ $mensagens = $db->select("m.*, u.nome as usuario_nome, u.nivel, n.nivel as nivel
                     <?php foreach ($mensagens as $msg){
                             if ($msg['usuario_id'] == $_SESSION['id']) {
                                 $classe = "user";
-                                $remetente = "Eu";
+                                $remetente = "Eu (" . $msg['nivel_descricao'] . ")";
                             } else {
                                 if ($_SESSION['nivel'] != 1) {
                                     $classe = "technician";
                                 } else {
                                     $classe = "user";
                                 }
-                                $remetente = $msgData['usuario_nome'] . " (" . $msgData['nivel_descricao'] . ")";
+                                $remetente = $msg['usuario_nome'] . " (" . $msg['nivel_descricao'] . ")";
                             }
                         ?>
                         <div class="message <?= $classe ?>">

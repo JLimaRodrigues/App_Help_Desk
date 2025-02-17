@@ -8,7 +8,25 @@ $nivel = $_SESSION['nivel'];
 //CHAMADOS DO SISTEMA
 if($nivel == 1){ // Usuário comum só pode ver os dele
 
+  $chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_chamado, ca.descricao as categoria, us.nome")
+    ->from("chamado ch")
+    ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
+    ->join("usuario us", "us.id = ch.usuario_id")
+    ->where("ch.usuario_id = :tecnico_id", ["tecnico_id" => $session_id])
+    ->orderBy("ch.created_at", "DESC")
+    ->execute();
+//echo "<pre>"; print_r($chamados); echo "</pre>"; exit;
 } else if($nivel == 2){ //Técnico - pode ver os deles e os atribuidos para ele
+
+  $chamados = $db->select("DISTINCT ch.id_chamado, ch.titulo, ca.descricao as categoria, us.nome")
+  ->from("chamado ch")
+  ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
+  ->join("usuario us", "us.id = ch.usuario_id")
+  ->join("atribuido_para atri", "atri.chamado_id = ch.id_chamado")
+  ->where("atri.tecnico_id = :tecnico_id", ["tecnico_id" => $session_id])
+  ->orderBy("ch.created_at", "DESC")
+  ->limit(20)
+  ->execute();
 
 } else {// Gestor ou Administrador - podem ver todos
   $chamados = $db->select("ch.usuario_id, ch.id_chamado, ch.titulo, ch.descricao_chamado, ca.descricao as categoria, us.nome")
@@ -77,7 +95,7 @@ if($nivel == 1){ // Usuário comum só pode ver os dele
               
                 <div class="card my-3 bg-light card-clickable" data-ticket-id="<?= $chamado['id_chamado'] ?>">
                     <div class="card-body">
-                        <h5 class="card-title"><?= $chamado['titulo'] ?> <b> feito por <?php $session_id == $chamado['usuario_id'] ? 'mim': $chamado['nome'] ?><b></h5>
+                        <h5 class="card-title"><?= $chamado['titulo'] ?> <b> feito por <?php echo $session_id == $chamado['usuario_id'] ? 'mim': $chamado['nome'] ?><b></h5>
                         <h6 class="card-subtitle mb-2 text-muted"><?= $chamado['categoria'] ?></h6>
                         <p class="card-text"><?= $chamado['descricao_chamado'] ?></p>
                     </div>

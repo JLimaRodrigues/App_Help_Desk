@@ -13,6 +13,9 @@ COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
 RUN chmod +x /usr/local/bin/wait-for-it.sh
 
 # Remove os CRLF do arquivo e define permissões de execução
-RUN sed -i 's/\r$//' /app/websocket_server.php && chmod +x /app/websocket_server.php
+RUN sed -i 's/\r$//' /app/websocket_server.php && \
+    sed -i 's/\r$//' /app/config.php && \
+    sed -i 's/\r$//' /app/.env && \
+    sed -i 's/\r$//' /usr/local/bin/wait-for-it.sh
 
 CMD ["wait-for-it.sh", "db:3306", "-t", "90", "--", "php", "/app/websocket_server.php"]

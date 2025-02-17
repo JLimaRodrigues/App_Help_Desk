@@ -74,6 +74,14 @@ class Conexao
 
     public function where($condicao, $params = []) {
         $this->sql .= " WHERE " . $condicao;
+    
+        foreach ($params as $key => $value) {
+            if (strpos($key, ':') === false) {
+                $params[":" . $key] = $value;
+                unset($params[$key]);
+            }
+        }
+    
         $this->params = array_merge($this->params, $params);
         return $this;
     }
@@ -184,40 +192,43 @@ class Conexao
     }
 
     public function execute() {
-        if (empty($this->sql)) {
-            $this->logError("Tentativa de executar uma query vazia.");
-            throw new Exception("Query was empty");
-        }
-
-        try {
-            $stmt = $this->conexao->prepare($this->sql);
-
-            foreach ($this->params as $key => $value) {
-                $paramType = PDO::PARAM_STR;
-                if (is_int($value)) {
-                    $paramType = PDO::PARAM_INT;
-                } elseif (is_null($value)) {
-                    $paramType = PDO::PARAM_NULL;
-                } elseif (is_bool($value)) {
-                    $value = $value ? 1 : 0;
-                    $paramType = PDO::PARAM_INT;
-                }
-                $stmt->bindValue(":" . $key, $value, $paramType);
-            }
-
-            $stmt->execute();
-            $this->logQuery($this->sql, $this->params);
-
-            if (stripos($this->sql, "SELECT") === 0) {
-                return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            }
-            return true;
-
-        } finally {
-            $this->sql = null;
-            $this->params = [];
-        }
+    if (empty($this->sql)) {
+        $this->logError("Tentativa de executar uma query vazia.");
+        throw new Exception("Query was empty");
     }
+
+    try {
+        $stmt = $this->conexao->prepare($this->sql);
+
+        foreach ($this->params as $key => $value) {
+            $paramName = (strpos($key, ':') === false) ? ":" . $key : $key;
+
+            $paramType = PDO::PARAM_STR;
+            if (is_int($value)) {
+                $paramType = PDO::PARAM_INT;
+            } elseif (is_null($value)) {
+                $paramType = PDO::PARAM_NULL;
+            } elseif (is_bool($value)) {
+                $value = $value ? 1 : 0;
+                $paramType = PDO::PARAM_INT;
+            }
+
+            $stmt->bindValue($paramName, $value, $paramType);
+        }
+
+        $stmt->execute();
+        $this->logQuery($this->sql, $this->params);
+
+        if (stripos($this->sql, "SELECT") === 0) {
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }
+        return true;
+
+    } finally {
+        $this->sql = null;
+        $this->params = [];
+    }
+}
 
     // Métodos para log
     private function logQuery($sql, $params) {
