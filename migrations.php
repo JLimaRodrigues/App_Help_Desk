@@ -109,19 +109,35 @@ try {
     ]);
 
     $db->insert("usuario", [
-        "nome" => "Administrador",
+        "nome" => "Administrador 1",
         "login" => "admin",
         "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
         "nivel" => 4,
-        "email" => "admin.teste@example.com"
+        "email" => "admin.teste1@example.com"
     ]);
 
     $db->insert("usuario", [
-        "nome" => "Usuário Comum",
+        "nome" => "Administrador 2",
+        "login" => "admin.2",
+        "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
+        "nivel" => 4,
+        "email" => "admin.teste2@example.com"
+    ]);
+
+    $db->insert("usuario", [
+        "nome" => "Usuário Comum 1",
         "login" => "teste",
         "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
         "nivel" => 1,
         "email" => "teste@example.com"
+    ]);
+
+    $db->insert("usuario", [
+        "nome" => "Usuário Comum 2",
+        "login" => "teste.2",
+        "senha" => password_hash("123456", PASSWORD_BCRYPT, ['cost' => 12]),
+        "nivel" => 1,
+        "email" => "teste2@example.com"
     ]);
 
     echo "Tabelas criadas e dados inseridos com sucesso!";

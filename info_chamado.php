@@ -139,52 +139,61 @@ $mensagens = $db->select("m.*, u.nome as usuario_nome, u.nivel, n.nivel as nivel
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
     <script>
-  // Conecta ao WebSocket (certifique-se de que o IP/porta estejam corretos)
-  var conn = new WebSocket('ws://localhost:8082');
+    // Conecta ao WebSocket (certifique-se de que o IP/porta estejam corretos)
+    var conn = new WebSocket('ws://localhost:8082');
 
-  conn.onopen = function(e) {
-      console.log("Conexão WebSocket estabelecida!");
-  };
+    conn.onopen = function(e) {
+        console.log("Conexão WebSocket estabelecida!");
 
-  conn.onmessage = function(e) {
-    var data = JSON.parse(e.data);
+        conn.send(JSON.stringify({
+        tipo: 'registro', // Tipo de mensagem
+        chamado: <?= $_GET['chamado']; ?>, // ID do chamado
+        usuario: <?= $_SESSION['id']; ?> // ID do usuário
+    }));
+    };
 
-    var mensagemElem = document.createElement("div");
-    var remetente = "";
-    var classe = "";
+    conn.onmessage = function(e) {
+        var data = JSON.parse(e.data);
 
-    var idUsuario = <?= $_SESSION['id']; ?>;
+        // Verifica se a mensagem é para o chamado atual
+        if (data.chamado_id == <?= $_GET['chamado']; ?>) {
+            var mensagemElem = document.createElement("div");
+            var remetente = "";
+            var classe = "";
 
-    if (data.usuario_id && data.usuario_id == idUsuario) {
-        classe = "user";
-        remetente = "Eu";
-    } else {
-        classe = "technician";
-        remetente = data.usuario_nome || "Outros";
-    }
+            var idUsuario = <?= $_SESSION['id']; ?>;
 
-    // Cria o markup da mensagem com os dados recebidos
-    mensagemElem.className = "message " + classe;
-    mensagemElem.innerHTML = "<div class='message-info'><strong>" + remetente + " (" + data.nivel + ") - " + data.data + "</strong></div>" +
-                             "<p>" + data.mensagem + "</p>";
-    document.getElementById("chat-container").appendChild(mensagemElem);
-};
+            if (data.usuario_id && data.usuario_id == idUsuario) {
+                classe = "user";
+                remetente = "Eu";
+            } else {
+                classe = "technician";
+                remetente = data.usuario_nome || "Outros";
+            }
 
-  // Exemplo de envio de mensagem ao enviar o formulário do chat
-  document.getElementById('message-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      var messageInput = document.getElementById('message-input');
-      var mensagem = messageInput.value.trim();
+            // Cria o markup da mensagem com os dados recebidos
+            mensagemElem.className = "message " + classe;
+            mensagemElem.innerHTML = "<div class='message-info'><strong>" + remetente + " (" + data.nivel + ") - " + data.data + "</strong></div>" +
+                                    "<p>" + data.mensagem + "</p>";
+            document.getElementById("chat-container").appendChild(mensagemElem);
+        }
+    };
 
-      if (mensagem !== "") {
-        var usuario = <?= $_SESSION['id']; ?>;
-        var chamado = <?= $_GET['chamado']; ?>;
+    // Envia a mensagem com o ID do chamado
+    document.getElementById('message-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var messageInput = document.getElementById('message-input');
+        var mensagem = messageInput.value.trim();
 
-        var data = JSON.stringify({ usuario, chamado, mensagem });
-        conn.send(data);
-        messageInput.value = "";
-      }
-  });
+        if (mensagem !== "") {
+            var usuario = <?= $_SESSION['id']; ?>;
+            var chamado = <?= $_GET['chamado']; ?>;
+
+            var data = JSON.stringify({ usuario, chamado, mensagem });
+            conn.send(data);
+            messageInput.value = "";
+        }
+    });
 </script>
 </body>
 </html>

@@ -8,33 +8,29 @@ $host = '0.0.0.0';
 $port = 8082;
 $null = NULL;
 
-// Cria o socket principal
 $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
 socket_bind($socket, $host, $port);
 socket_listen($socket);
 
 $clients = [$socket];
+$chamados = [];
 
 echo "Servidor WebSocket iniciado em ws://{$host}:{$port}\n";
 
 while (true) {
-    // Cria um array com todos os sockets para passar para o socket_select
     $changed = $clients;
     socket_select($changed, $null, $null, 0, 10);
 
-    // Se for o socket principal, significa nova conexão
     if (in_array($socket, $changed)) {
         $newSocket = socket_accept($socket);
         $clients[] = $newSocket;
 
-        // Lê o cabeçalho da requisição do handshake
         $header = socket_read($newSocket, 1024);
         if ($header) {
             perform_handshake($header, $newSocket, $host, $port);
             echo "Nova conexão estabelecida.\n";
         }
-        // Remove o socket principal da lista de sockets prontos
         $key = array_search($socket, $changed);
         unset($changed[$key]);
     }
@@ -42,6 +38,12 @@ while (true) {
     foreach ($changed as $client) {
         $data = @socket_read($client, 1024);
         if ($data === false) {
+            foreach ($chamados as $chamadoId => $clientes) {
+                $key = array_search($client, $clientes);
+                if ($key !== false) {
+                    unset($chamados[$chamadoId][$key]);
+                }
+            }
             $index = array_search($client, $clients);
             unset($clients[$index]);
             socket_close($client);
@@ -51,19 +53,42 @@ while (true) {
         
         $data = trim($data);
         if (!empty($data)) {
-
             $decodedMessage = unmask($data);
             echo "Mensagem recebida: {$decodedMessage}\n";
 
             $mensagemRecebida = json_decode($decodedMessage, true);
+
+            if (isset($mensagemRecebida['tipo']) && $mensagemRecebida['tipo'] === 'registro') {
+                $chamadoId = $mensagemRecebida['chamado'];
+                
+                if (!isset($chamados[$chamadoId])) {
+                    $chamados[$chamadoId] = [];
+                }
+                
+                if (!in_array($client, $chamados[$chamadoId])) {
+                    $chamados[$chamadoId][] = $client;
+                    echo "Cliente registrado no chamado: {$chamadoId}\n";
+                }
+                
+                continue; // Pula o processamento de mensagem normal
+            }
+
             if ($mensagemRecebida && isset($mensagemRecebida['usuario'], $mensagemRecebida['chamado'], $mensagemRecebida['mensagem'])) {
-                // Insere no banco de dados
+                $chamadoId = $mensagemRecebida['chamado'];
+
+                if (!isset($chamados[$chamadoId])) {
+                    $chamados[$chamadoId] = [];
+                }
+                if (!in_array($client, $chamados[$chamadoId])) {
+                    $chamados[$chamadoId][] = $client;
+                }
+
                 $db->insert("mensagens_chamado", [
                     "chamado_id" => $mensagemRecebida['chamado'],
                     "usuario_id" => $mensagemRecebida['usuario'],
                     "mensagem"   => $mensagemRecebida['mensagem']
                 ]);
-        
+
                 $ultimoId = $db->getLastInsertId(); 
 
                 $resultado = $db->select("m.*, u.id as usuario_id, u.nome as usuario_nome, n.nivel as nivel_descricao")
@@ -75,27 +100,23 @@ while (true) {
         
                 if (!empty($resultado)) {
                     $msgData = $resultado[0];
-                    $textoResposta = $msgData['usuario_nome'] . " (" . $msgData['nivel_descricao'] . ") - " . $msgData['created_at'] . " : " . $msgData['mensagem'];
-                    
                     $respostaJson = json_encode([
                         "usuario_id"   => $msgData['usuario_id'],
                         "usuario_nome" => $msgData['usuario_nome'],
                         "nivel"        => $msgData['nivel_descricao'],
                         "data"         => $msgData['created_at'],
-                        "mensagem"     => $msgData['mensagem']
+                        "mensagem"     => $msgData['mensagem'],
+                        "chamado_id"   => $msgData['chamado_id'],
                     ]);
                 } else {
                     $respostaJson = json_encode(["mensagem" => $mensagemRecebida['mensagem']]);
                 }
-            } else {
-                $respostaJson = json_encode(["mensagem" => $decodedMessage]);
-            }
-        
-            $response = mask($respostaJson);
-        
-            foreach ($clients as $sendClient) {
-                if ($sendClient != $socket) {
-                    socket_write($sendClient, $response, strlen($response));
+
+                $response = mask($respostaJson);
+                foreach ($chamados[$chamadoId] as $sendClient) {
+                    if ($sendClient != $socket) {
+                        socket_write($sendClient, $response, strlen($response));
+                    }
                 }
             }
         }

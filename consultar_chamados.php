@@ -12,10 +12,10 @@ if($nivel == 1){ // Usuário comum só pode ver os dele
     ->from("chamado ch")
     ->join("categoria ca", "ca.id_categoria = ch.categoria_id")
     ->join("usuario us", "us.id = ch.usuario_id")
-    ->where("ch.usuario_id = :tecnico_id", ["tecnico_id" => $session_id])
+    ->where("ch.usuario_id = :usuario_id", ["usuario_id" => $session_id])
     ->orderBy("ch.created_at", "DESC")
     ->execute();
-//echo "<pre>"; print_r($chamados); echo "</pre>"; exit;
+// echo "<pre>"; print_r($chamados); echo "</pre>"; exit;
 } else if($nivel == 2){ //Técnico - pode ver os deles e os atribuidos para ele
 
   $chamados = $db->select("DISTINCT ch.id_chamado, ch.titulo, ca.descricao as categoria, us.nome")
